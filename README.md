@@ -1,6 +1,11 @@
 # PhysicsTutorials.jl
 This package holds tutorials showing how to utilize Julia and its ecosystem for physics applications. Tutorials are available as PDFs, HTML webpages, and interactive Jupyter notebooks. For more details, please consult the [JuliaPhysics webpage](http://juliaphysics.github.io).
 
+## Table of Contents
+
+* General
+  * [Speeding up Quantum Mechanics - Matrix Types](tutorials/general/matrix_types.ipynb)
+
 ## Interactive Jupyter Notebooks
 
 To run the tutorials interactively in Jupyter notebooks, install the package and IJulia via
@@ -15,12 +20,6 @@ and start/open the notebook server like
 using PhysicsTutorials, IJulia
 PhysicsTutorials.open_notebooks()
 ```
-
-## Table of Contents
-
-* General
-  * [Speeding up Quantum Mechanics - Matrix Types](tutorials/general/matrix_types.ipynb)
-
 
 ## Contributing
 
