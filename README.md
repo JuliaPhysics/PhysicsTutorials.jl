@@ -43,9 +43,11 @@ PhysicsTutorials.weave_all()
 
 If you add new tutorials please put
 
+`````markdown
 ```{julia; echo=false; skip="notebook"}
 using PhysicsTutorials
 PhysicsTutorials.tutorial_footer(WEAVE_ARGS[:folder],WEAVE_ARGS[:file])
 ```
+`````
 
 at the end of the `*.jmd` file. If your tutorial requires new packages, don't forget to `] add` them to the `Project.toml` file in the root folder of the repository.
