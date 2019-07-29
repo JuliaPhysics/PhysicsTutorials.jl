@@ -19,7 +19,7 @@ PhysicsTutorials.open_notebooks()
 ## Table of Contents
 
 * General
-  * Speeding up Quantum Mechanics - Matrix Types
+  * [Speeding up Quantum Mechanics - Matrix Types](tutorials/general/matrix_types.ipynb)
 
 
 ## Contributing
