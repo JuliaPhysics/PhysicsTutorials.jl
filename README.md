@@ -40,7 +40,7 @@ PhysicsTutorials.convert_tutorial("<category>","<tutorial_name>", PhysicsTutoria
 
 For Weave or Literate sources, replace `PhysicsTutorials.NotebookSource()` by `PhysicsTutorials.WeaveSource()` or `PhysicsTutorials.LiterateSource()`, respectively.
 
-### An easy way to generate source
+### An easy way to generate files from source
 0. Make sure you have `Fire` installed, if not, install it with `julia>]add Fire`,
 1. Create source file `tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>`, where the extension should be one of `.ipynb`, `.jl` and `.jmd` .
 2. Type `julia generate.jl tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>` in a terminal.
