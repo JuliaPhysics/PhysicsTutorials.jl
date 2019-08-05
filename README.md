@@ -35,4 +35,4 @@ using PhysicsTutorials
 PhysicsTutorials.convert_tutorial("<category>","<tutorial_name>"; PhysicsTutorials.NotebookSource())
 ```
 
-For Weave or Literate sources, replace `PhysicsTutorials.NotebookSource()` by `PhysicsTutorials.WeaveSource` or `PhysicsTutorials.LiterateSource`, respectively.
+For Weave or Literate sources, replace `PhysicsTutorials.NotebookSource()` by `PhysicsTutorials.WeaveSource()` or `PhysicsTutorials.LiterateSource()`, respectively.
