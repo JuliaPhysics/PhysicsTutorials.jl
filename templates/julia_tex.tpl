@@ -1,4 +1,4 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[11pt,a4paper]{article}
 
 \usepackage[a4paper,text={16.5cm,25.2cm},centering]{geometry}
 \usepackage{lmodern}
@@ -29,7 +29,7 @@
 {{/:author}}
 
 {{#:date}}
-\date{ {{{ :date }}} }
+\date{ {{{ :date }}}}
 {{/:date}}
 
 {{ :highlight }}

@@ -668,11 +668,7 @@ div.title {text-align: center;}
 <p class="math">\[
 \mathcal{H} = -t\sum_{\langle i,j \rangle} c_i^\dagger c_j + \mu \sum_i n_i
 \]</p>
-<p>Here, <span class="math">$t$</span> is the hopping amplitude, <span class="math">$\mu$</span> is the chemical potential, and <span class="math">$c, c^\dagger$</span> are creation and annihilation operators.</p>
-<p>For the sake of the argument of this tutorial, we&#39;ll consider <strong>open boundary conditions</strong>.</p>
-<p>Since the fermions are <em>not</em> interacting, we can work in the <em>single particle basis</em> and do not have to worry about how to construct a basis for the many-body Fock space.</p>
-<p>We use the canonical cartesian basis in which one uses <span class="math">$0$</span>s to indicate empty sites and a <span class="math">$1$</span> for the particle&#39;s site, i.e. <span class="math">$|00100\rangle$</span> represents the basis state which has the particle exclusively on the 3rd site.</p>
-<p>If you aren&#39;t familiar with second quantization just think of <span class="math">$\mathcal{H}$</span> as any quantum mechanical operator that can be represented as a matrix.</p>
+<p>Here, <span class="math">$t$</span> is the hopping amplitude, <span class="math">$\mu$</span> is the chemical potential, and <span class="math">$c, c^\dagger$</span> are creation and annihilation operators. For the sake of the argument of this tutorial, we&#39;ll consider <strong>open boundary conditions</strong>. Since the fermions are <em>not</em> interacting, we can work in the <em>single particle basis</em> and do not have to worry about how to construct a basis for the many-body Fock space. We use the canonical cartesian basis in which one uses <span class="math">$0$</span>s to indicate empty sites and a <span class="math">$1$</span> for the particle&#39;s site, i.e. <span class="math">$|00100\rangle$</span> represents the basis state which has the particle exclusively on the 3rd site. If you aren&#39;t familiar with second quantization just think of <span class="math">$\mathcal{H}$</span> as any quantum mechanical operator that can be represented as a matrix.</p>
 <p>Let&#39;s build the Hamiltonian matrix.</p>
 
 
@@ -740,7 +736,7 @@ Calculates the quantum mechanical expectation value `&lt;ψ|O|ψ&gt;`, where `O`
 
 
 <pre class="output">
--1.9937469467844573
+-1.890366116209007
 </pre>
 
 
@@ -748,26 +744,18 @@ Calculates the quantum mechanical expectation value `&lt;ψ|O|ψ&gt;`, where `O`
 
 
 <pre class='hljl'>
-<span class='hljl-k'>using</span><span class='hljl-t'> </span><span class='hljl-n'>BenchmarkTools</span>
-</pre>
-
-
-
-
-<pre class='hljl'>
-<span class='hljl-nd'>@btime</span><span class='hljl-t'> </span><span class='hljl-nf'>ev</span><span class='hljl-p'>(</span><span class='hljl-oB'>$</span><span class='hljl-n'>H</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-oB'>$</span><span class='hljl-n'>ψ</span><span class='hljl-p'>);</span>
+<span class='hljl-k'>using</span><span class='hljl-t'> </span><span class='hljl-n'>BenchmarkTools</span><span class='hljl-t'>
+</span><span class='hljl-nd'>@btime</span><span class='hljl-t'> </span><span class='hljl-nf'>ev</span><span class='hljl-p'>(</span><span class='hljl-oB'>$</span><span class='hljl-n'>H</span><span class='hljl-p'>,</span><span class='hljl-t'> </span><span class='hljl-oB'>$</span><span class='hljl-n'>ψ</span><span class='hljl-p'>);</span>
 </pre>
 
 
 <pre class="output">
-8.467 μs &#40;1 allocation: 896 bytes&#41;
+8.500 μs &#40;1 allocation: 896 bytes&#41;
 </pre>
 
 
 <h3>Utilizing the matrix structure</h3>
-<p>Since <code>typeof&#40;H&#41; &#61;&#61; Matrix&#123;Float64&#125;</code>, we have so far dispatched to generic matrix multiplications &#40;and transposition&#41; in the <code>ev</code> function.</p>
-<p>What we should do is exploit the <em>structure</em> of our Hamiltonian and use specialized, faster implementations of these operations. After all, most entries in <span class="math">$\mathcal{H}$</span> are equal to zero and multiplications involving those zeros are clearly unnecessary.</p>
-<p>To speed up our expectation value computation, we can tell Julia about the <em>sparsity</em> of our Hamiltonian. The way we do this, is by changing <code>H</code>&#39;s type.</p>
+<p>Since <code>typeof&#40;H&#41; &#61;&#61; Matrix&#123;Float64&#125;</code>, we have so far dispatched to generic matrix multiplications &#40;and transposition&#41; in the <code>ev</code> function. What we should do is exploit the <em>structure</em> of our Hamiltonian and use specialized, faster implementations of these operations. After all, most entries in <span class="math">$\mathcal{H}$</span> are equal to zero and multiplications involving those zeros are clearly unnecessary. To speed up our expectation value computation, we can tell Julia about the <em>sparsity</em> of our Hamiltonian. The way we do this, is by changing <code>H</code>&#39;s type.</p>
 
 
 <pre class='hljl'>
@@ -821,7 +809,7 @@ SparseArrays.SparseMatrixCSC&#123;Float64,Int64&#125;
 
 
 <pre class="output">
-367.145 ns &#40;2 allocations: 912 bytes&#41;
+341.038 ns &#40;2 allocations: 912 bytes&#41;
 </pre>
 
 
@@ -903,19 +891,19 @@ Sparsity Pattern
 
 
 <pre class="output">
-192.701 ns &#40;4 allocations: 976 bytes&#41;
+178.993 ns &#40;4 allocations: 976 bytes&#41;
 </pre>
 
 
 <p>That&#39;s almost <strong>another 2x speedup</strong>&#33;</p>
 <p>What we learn from this is that we can tell Julia about the structure of our Hamiltonian through types. Instead of using generic &#40;and slow&#41; matrix operations, we then dispatch to fast special implementations that have been optimized for this particular structure.</p>
-<p>On a final note, choosing the best type &#40;and therewith an algorithm&#41; can be tricky and one has to play around a bit. The good thing is that it&#39;s very easy to try out different types&#33;</p>
-<p>Note that apart from Julia&#39;s built-in matrix types there are also great custom types available in the ecosystem. See <a href="https://github.com/JuliaMatrices">JuliaMatrices</a> for more information.</p>
+<p>On a final note, choosing the best type &#40;and therewith an algorithm&#41; can be tricky and one has to play around a bit. The good thing is that it&#39;s very easy to try out different types&#33; Note that apart from Julia&#39;s built-in matrix types there are also great custom types available in the ecosystem. See <a href="https://github.com/JuliaMatrices">JuliaMatrices</a> for more information.</p>
 <h1>Core message of this tutorial</h1>
 <ul>
 <li><p><strong>Indicate the structure of a matrix</strong>, like hermiticity or sparsity, through types. Fallback to generic types only if you run into method errors.</p>
 </li>
 </ul>
+<p><em>This notebook was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p>
 
 
 

@@ -33,7 +33,11 @@ end
 
 function format_header!(weavefile)
     lines = split(read(weavefile, String), "\n")
-    if startswith(lines[2], "#") && startswith(lines[3], "###")
+    idx = 1
+    while strip(lines[idx]) == ""
+        idx += 1
+    end
+    if startswith(lines[idx], "#") && startswith(lines[idx+1], "###")
         title = strip(lines[2][2:end])
         author = strip(lines[3][4:end])
         header = strip.(split("""---
@@ -52,14 +56,23 @@ struct WeaveSource <: Source end
 
 convert_tutorial(cat, tut; kwargs...) = convert_tutorial(cat, tut, NotebookSource(); kwargs...)
 
-function convert_tutorial(cat, tut, source::NotebookSource; overwrite=false, quick=false, markdown=false)
+function convert_tutorial(cat, tut, source::NotebookSource;
+                            overwrite=false,
+                            quick=false,
+                            markdown=false,
+                            keep_weave=false,
+                            use_weave=false)
     tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
     nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
     weavefile = joinpath(tut_folder, string(tut, ".jmd"))
 
     # weave
     @info "Preparing"
-    convert_doc(nbfile, weavefile)
+    if use_weave
+        !isfile(weavefile) && error("use_weave=true but no Weave file present!")
+    else
+        convert_doc(nbfile, weavefile)
+    end
 
     # markdown
     if markdown && (!isfile(joinpath(tut_folder, string(tut, ".md"))) || overwrite)
@@ -96,9 +109,35 @@ function convert_tutorial(cat, tut, source::NotebookSource; overwrite=false, qui
             end
         end
     end
-    isfile(weavefile) && rm(weavefile)
+    keep_weave || (isfile(weavefile) && rm(weavefile))
     @info "Done"
     nothing
+end
+
+function convert_tutorial(cat, tut, source::LiterateSource; kwargs...)
+    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+    literatefile = joinpath(tut_folder, string(tut, ".jl"))
+    nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
+
+    # notebook
+    @info "Converting to notebook"
+    with_localenv(tut_folder) do
+        Literate.notebook(literatefile, tut_folder; documenter=false)
+    end
+    convert_tutorial(cat, tut, NotebookSource(); kwargs...)
+end
+
+function convert_tutorial(cat, tut, source::WeaveSource; kwargs...)
+    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+    weavefile = joinpath(tut_folder, string(tut, ".jmd"))
+    nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
+
+    # notebook
+    @info "Converting to notebook"
+    with_localenv(tut_folder) do
+        Weave.notebook(weavefile; out_path=tut_folder)
+    end
+    convert_tutorial(cat, tut, NotebookSource(); keep_weave=true, use_weave=true, kwargs...)
 end
 
 end # module
