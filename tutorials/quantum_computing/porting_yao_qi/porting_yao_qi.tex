@@ -1,0 +1,434 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper,text={16.5cm,25.2cm},centering]{geometry}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{hyperref}
+\usepackage{mhchem}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.2ex}
+
+\hypersetup
+       {   pdfauthor = { GiggleLiu },
+           pdftitle={ How to port Yao.jl to QuantumInformation.jl },
+           colorlinks=TRUE,
+           linkcolor=black,
+           citecolor=blue,
+           urlcolor=blue
+       }
+
+\title{ How to port Yao.jl to QuantumInformation.jl }
+
+\author{ GiggleLiu }
+
+
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage{upquote}
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    upquote=true,
+    breaklines=true,
+    keepspaces=true,
+    showspaces=false,
+    columns=fullflexible,
+    showtabs=false,
+    showstringspaces=false,
+    escapeinside={(*@}{@*)},
+    extendedchars=true,
+}
+\newcommand{\HLJLt}[1]{#1}
+\newcommand{\HLJLw}[1]{#1}
+\newcommand{\HLJLe}[1]{#1}
+\newcommand{\HLJLeB}[1]{#1}
+\newcommand{\HLJLo}[1]{#1}
+\newcommand{\HLJLk}[1]{\textcolor[RGB]{148,91,176}{\textbf{#1}}}
+\newcommand{\HLJLkc}[1]{\textcolor[RGB]{59,151,46}{\textit{#1}}}
+\newcommand{\HLJLkd}[1]{\textcolor[RGB]{214,102,97}{\textit{#1}}}
+\newcommand{\HLJLkn}[1]{\textcolor[RGB]{148,91,176}{\textbf{#1}}}
+\newcommand{\HLJLkp}[1]{\textcolor[RGB]{148,91,176}{\textbf{#1}}}
+\newcommand{\HLJLkr}[1]{\textcolor[RGB]{148,91,176}{\textbf{#1}}}
+\newcommand{\HLJLkt}[1]{\textcolor[RGB]{148,91,176}{\textbf{#1}}}
+\newcommand{\HLJLn}[1]{#1}
+\newcommand{\HLJLna}[1]{#1}
+\newcommand{\HLJLnb}[1]{#1}
+\newcommand{\HLJLnbp}[1]{#1}
+\newcommand{\HLJLnc}[1]{#1}
+\newcommand{\HLJLncB}[1]{#1}
+\newcommand{\HLJLnd}[1]{\textcolor[RGB]{214,102,97}{#1}}
+\newcommand{\HLJLne}[1]{#1}
+\newcommand{\HLJLneB}[1]{#1}
+\newcommand{\HLJLnf}[1]{\textcolor[RGB]{66,102,213}{#1}}
+\newcommand{\HLJLnfm}[1]{\textcolor[RGB]{66,102,213}{#1}}
+\newcommand{\HLJLnp}[1]{#1}
+\newcommand{\HLJLnl}[1]{#1}
+\newcommand{\HLJLnn}[1]{#1}
+\newcommand{\HLJLno}[1]{#1}
+\newcommand{\HLJLnt}[1]{#1}
+\newcommand{\HLJLnv}[1]{#1}
+\newcommand{\HLJLnvc}[1]{#1}
+\newcommand{\HLJLnvg}[1]{#1}
+\newcommand{\HLJLnvi}[1]{#1}
+\newcommand{\HLJLnvm}[1]{#1}
+\newcommand{\HLJLl}[1]{#1}
+\newcommand{\HLJLld}[1]{\textcolor[RGB]{148,91,176}{\textit{#1}}}
+\newcommand{\HLJLs}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsa}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsb}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsc}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsd}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsdB}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsdC}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLse}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLsh}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsi}[1]{#1}
+\newcommand{\HLJLso}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLsr}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLss}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLssB}[1]{\textcolor[RGB]{201,61,57}{#1}}
+\newcommand{\HLJLnB}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLnbB}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLnfB}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLnh}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLni}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLnil}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLnoB}[1]{\textcolor[RGB]{59,151,46}{#1}}
+\newcommand{\HLJLoB}[1]{\textcolor[RGB]{102,102,102}{\textbf{#1}}}
+\newcommand{\HLJLow}[1]{\textcolor[RGB]{102,102,102}{\textbf{#1}}}
+\newcommand{\HLJLp}[1]{#1}
+\newcommand{\HLJLc}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLch}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLcm}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLcp}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLcpB}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLcs}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLcsB}[1]{\textcolor[RGB]{153,153,119}{\textit{#1}}}
+\newcommand{\HLJLg}[1]{#1}
+\newcommand{\HLJLgd}[1]{#1}
+\newcommand{\HLJLge}[1]{#1}
+\newcommand{\HLJLgeB}[1]{#1}
+\newcommand{\HLJLgh}[1]{#1}
+\newcommand{\HLJLgi}[1]{#1}
+\newcommand{\HLJLgo}[1]{#1}
+\newcommand{\HLJLgp}[1]{#1}
+\newcommand{\HLJLgs}[1]{#1}
+\newcommand{\HLJLgsB}[1]{#1}
+\newcommand{\HLJLgt}[1]{#1}
+
+
+\begin{document}
+
+\maketitle
+
+\section{overview}
+\href{https://github.com/QuantumBFS/Yao.jl}{\texttt{Yao}} is a powerful tool for quantum circuit based simulation, but it does not support many density matrix related operations. This is why we need to port \texttt{Yao.jl} with \href{https://github.com/QuantumBFS/QuantumInformation.jl}{\texttt{QuantumInformation (QI)}} sometimes (e.g. for computing entanglement entropy).
+
+\begin{itemize}
+\item \texttt{Yao.jl} Documentation: https://quantumbfs.github.io/Yao.jl/latest/ (paper is comming out)
+
+
+\item \texttt{QuantumInformation.jl} paper: https://arxiv.org/abs/1806.11464
+
+\end{itemize}
+\subsubsection{\texttt{Yao} provides}
+\begin{itemize}
+\item high performance quantum circuit based simulation
+
+\begin{itemize}
+\item parameter management
+
+
+\item gradients
+
+
+\item batched regiser
+
+\end{itemize}
+
+\item operator matrix representation and arithmatics
+
+
+\item \href{https://github.com/QuantumBFS/QuAlgorithmZoo.jl}{quantum algorithms}
+
+
+\item \href{https://github.com/QuantumBFS/CuYao.jl}{GPU support}
+
+\end{itemize}
+\subsubsection{\texttt{QI} provides}
+\begin{itemize}
+\item Compute entropy from density matrices
+
+
+\item Quantum channels, four types of channel representations
+
+\begin{itemize}
+\item Kraus Operator
+
+
+\item Super operator
+
+
+\item Dynamic matrices
+
+
+\item Stinespring representation
+
+\end{itemize}
+
+\item Compute norm, distance and distingushability between "states" (density matrices)
+
+\begin{itemize}
+\item Hilbert\ensuremath{\endash}Schmidt norm and distance
+
+
+\item trace norm and \emph{distance}
+
+
+\item diamond norm
+
+
+\item Bures distane and Bures angles
+
+
+\item \emph{fidelity} and superfidelity
+
+
+\item KL-divergence
+
+
+\item JS-distance
+
+\end{itemize}
+
+\item Compute the amount of entanglement
+
+\begin{itemize}
+\item negativity
+
+
+\item positive partial trace
+
+
+\item concurrence
+
+\end{itemize}
+
+\item POVM measurements
+
+\end{itemize}
+
+\begin{lstlisting}
+(*@\HLJLk{import}@*) (*@\HLJLn{Yao}@*)
+(*@\HLJLk{using}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{:}@*) (*@\HLJLn{ArrayReg}@*)(*@\HLJLp{,}@*) (*@\HLJLn{\ensuremath{\rho}}@*)(*@\HLJLp{,}@*) (*@\HLJLn{mat}@*)(*@\HLJLp{,}@*) (*@\HLJLnd{@bit{\_}str}@*)(*@\HLJLp{,}@*) (*@\HLJLn{statevec}@*)(*@\HLJLp{,}@*) (*@\HLJLn{ConstGate}@*)
+(*@\HLJLk{import}@*) (*@\HLJLn{QuantumInformation}@*)(*@\HLJLp{;}@*) (*@\HLJLkd{const}@*) (*@\HLJLn{QI}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{QuantumInformation}@*)
+(*@\HLJLk{using}@*) (*@\HLJLn{QuantumInformation}@*)(*@\HLJLoB{:}@*) (*@\HLJLn{ket}@*)
+(*@\HLJLk{using}@*) (*@\HLJLn{LinearAlgebra}@*)
+(*@\HLJLk{using}@*) (*@\HLJLn{Test}@*)
+
+(*@\HLJLcs{{\#} patches to make life easier}@*)
+
+(*@\HLJLcs{{\#} obtaining matrix from Yao.DensityMatrix{\{}1{\}}, {\textasciigrave}1{\textasciigrave} is the batch size.}@*)
+(*@\HLJLn{LinearAlgebra}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{Matrix}@*)(*@\HLJLp{(}@*)(*@\HLJLn{d}@*)(*@\HLJLoB{::}@*)(*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{DensityMatrix}@*)(*@\HLJLp{{\{}}@*)(*@\HLJLni{1}@*)(*@\HLJLp{{\}})}@*) (*@\HLJLoB{=}@*) (*@\HLJLnf{dropdims}@*)(*@\HLJLp{(}@*)(*@\HLJLn{d}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{state}@*)(*@\HLJLp{,}@*) (*@\HLJLn{dims}@*)(*@\HLJLoB{=}@*)(*@\HLJLni{3}@*)(*@\HLJLp{)}@*)
+(*@\HLJLcs{{\#} obtaining Dense Matrix of a block}@*)
+(*@\HLJLn{LinearAlgebra}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{Matrix}@*)(*@\HLJLp{(}@*)(*@\HLJLn{blk}@*)(*@\HLJLoB{::}@*)(*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{AbstractBlock}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{=}@*) (*@\HLJLnf{Matrix}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{mat}@*)(*@\HLJLp{(}@*)(*@\HLJLn{blk}@*)(*@\HLJLp{))}@*)
+
+(*@\HLJLcs{{\#} exchange system and environment qubits}@*)
+(*@\HLJLk{function}@*) (*@\HLJLnf{exchange{\_}sysenv}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLoB{::}@*)(*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{{\{}}@*)(*@\HLJLn{B}@*)(*@\HLJLp{{\}})}@*) (*@\HLJLn{where}@*) (*@\HLJLn{B}@*)
+    (*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{{\{}}@*)(*@\HLJLn{B}@*)(*@\HLJLp{{\}}(}@*)(*@\HLJLnf{reshape}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{permutedims}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{rank3}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLp{),}@*) (*@\HLJLp{(}@*)(*@\HLJLni{2}@*)(*@\HLJLp{,}@*)(*@\HLJLni{1}@*)(*@\HLJLp{,}@*)(*@\HLJLni{3}@*)(*@\HLJLp{)),}@*) (*@\HLJLoB{:}@*)(*@\HLJLp{,}@*)(*@\HLJLnf{size}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{state}@*)(*@\HLJLp{,}@*) (*@\HLJLni{1}@*)(*@\HLJLp{)}@*)(*@\HLJLoB{*}@*)(*@\HLJLn{B}@*)(*@\HLJLp{))}@*)
+(*@\HLJLk{end}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+exchange_sysenv (generic function with 1 method)
+\end{lstlisting}
+
+
+\subsection{Obtain reduced density matrices in Yao}
+The memory layout of \texttt{Yao} register and \texttt{QI} ket are similar, their basis are both \href{https://en.wikipedia.org/wiki/Endianness}{little endian}, despite they have different representation powers
+
+\begin{itemize}
+\item \texttt{Yao} support batch,
+
+
+\item \texttt{QI} is not limited to qubits.
+
+\end{itemize}
+\texttt{Yao} does not have much operations defined on density matrices, but purified states with environment, On the other side, most operations in \texttt{QI} are defined on \textbf{(density) matrices}, they can be easily obtained in \texttt{Yao}.
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} construct a product state, notice the indexing in {\textasciigrave}QI{\textasciigrave} starts from {\textasciigrave}1{\textasciigrave}}@*)
+(*@\HLJLnd{@test}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{ket}@*)(*@\HLJLp{(}@*)(*@\HLJLni{3}@*)(*@\HLJLp{,}@*) (*@\HLJLni{1}@*)(*@\HLJLoB{<<}@*)(*@\HLJLni{4}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{\ensuremath{\approx}}@*) (*@\HLJLnf{statevec}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{(}@*)(*@\HLJLso{bit"0010"}@*)(*@\HLJLp{))}@*)
+
+(*@\HLJLcs{{\#} join two registers, notice little endian convension is used here.}@*)
+(*@\HLJLn{reg}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.:\ensuremath{\otimes}}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{(}@*)(*@\HLJLso{bit"10"}@*)(*@\HLJLp{),}@*) (*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{(}@*)(*@\HLJLso{bit"11"}@*)(*@\HLJLp{))}@*)
+(*@\HLJLn{v}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.:\ensuremath{\otimes}}@*)(*@\HLJLp{(}@*)(*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{ket}@*)(*@\HLJLp{(}@*)(*@\HLJLnbB{0b10}@*)(*@\HLJLoB{+}@*)(*@\HLJLni{1}@*)(*@\HLJLp{,}@*)(*@\HLJLni{1}@*)(*@\HLJLoB{<<}@*)(*@\HLJLni{2}@*)(*@\HLJLp{),}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{ket}@*)(*@\HLJLp{(}@*)(*@\HLJLnbB{0b11}@*)(*@\HLJLoB{+}@*)(*@\HLJLni{1}@*)(*@\HLJLp{,}@*)(*@\HLJLni{1}@*)(*@\HLJLoB{<<}@*)(*@\HLJLni{2}@*)(*@\HLJLp{))}@*)
+(*@\HLJLnd{@test}@*) (*@\HLJLnf{statevec}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{\ensuremath{\approx}}@*) (*@\HLJLn{v}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+Test Passed
+\end{lstlisting}
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} convert a Yao register to density matrix in QI}@*)
+(*@\HLJLnf{reg2dm}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLoB{::}@*)(*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{{\{}}@*)(*@\HLJLni{1}@*)(*@\HLJLp{{\}})}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{reg}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{\ensuremath{\rho}}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{Matrix}@*)
+
+(*@\HLJLcs{{\#} e.g. obtain a reduced denstiy matrix for subsystem 1,2,3,4}@*)
+(*@\HLJLn{reg}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{rand{\_}state}@*)(*@\HLJLp{(}@*)(*@\HLJLni{10}@*)(*@\HLJLp{)}@*)
+(*@\HLJLn{freg}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{focus!}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLp{,}@*) (*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLni{4}@*)(*@\HLJLp{)}@*) (*@\HLJLcs{{\#} make qubits 1-4 active}@*)
+(*@\HLJLnf{reg2dm}@*)(*@\HLJLp{(}@*)(*@\HLJLn{freg}@*)(*@\HLJLp{)}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+16(*@\ensuremath{\times}@*)16 Array{Complex{Float64},2}:
+    0.0622289+0.0im          (*@\ensuremath{\dots}@*)   0.00497154-0.000151893im
+ -0.000852963+0.00405955im       0.00256219-0.001406im   
+   0.00361924-0.00491942im       0.00077306+0.000804962im
+   0.00717682+0.0117293im        0.00262723+0.00613127im 
+  -0.00117206+0.000688596im     -0.00793284+0.00855315im 
+   0.00370287+0.000530007im  (*@\ensuremath{\dots}@*)  0.000941934+0.00494848im 
+  -0.00227279-0.00240522im      -0.00252272-0.00236731im 
+  -0.00127516-0.00161429im       0.00913826+0.00491542im 
+   0.00406948+0.00126399im       0.00135492+0.0112256im  
+  -0.00058792-0.0028352im        0.00754333+0.00424401im 
+  -0.00246691+0.00425831im   (*@\ensuremath{\dots}@*)   -0.0024771+0.00733111im 
+  -0.00232844-0.0123084im       -0.00620323-0.000427568im
+    0.0093884+0.00462096im      -0.00376321-0.000178979im
+   -0.0120502+0.00696317im      -0.00387295+0.00351041im 
+   0.00412265-0.000926791im      0.00109483+0.000948413im
+   0.00497154+0.000151893im  (*@\ensuremath{\dots}@*)    0.0582536+0.0im
+\end{lstlisting}
+
+
+One can also convert a density matrix to a a quantum state through \textbf{purification}
+
+
+\begin{lstlisting}
+(*@\HLJLs{"""
+get a purification of target density matrix,
+{\textasciigrave}nbit{\_}env{\textasciigrave} decides how many qubits in environment,
+which is related to the entropy.
+"""}@*)
+(*@\HLJLk{function}@*) (*@\HLJLnf{purify}@*)(*@\HLJLp{(}@*)(*@\HLJLn{r}@*)(*@\HLJLoB{::}@*)(*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{DensityMatrix}@*)(*@\HLJLp{{\{}}@*)(*@\HLJLn{B}@*)(*@\HLJLp{{\}};}@*) (*@\HLJLn{nbit{\_}env}@*)(*@\HLJLoB{::}@*)(*@\HLJLn{Int}@*)(*@\HLJLoB{=}@*)(*@\HLJLnf{nactive}@*)(*@\HLJLp{(}@*)(*@\HLJLn{r}@*)(*@\HLJLp{))}@*) (*@\HLJLn{where}@*) (*@\HLJLn{B}@*)
+    (*@\HLJLn{Ne}@*) (*@\HLJLoB{=}@*) (*@\HLJLni{1}@*)(*@\HLJLoB{<<}@*)(*@\HLJLn{nbit{\_}env}@*)
+    (*@\HLJLn{Ns}@*) (*@\HLJLoB{=}@*) (*@\HLJLnf{size}@*)(*@\HLJLp{(}@*)(*@\HLJLn{r}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{state}@*)(*@\HLJLp{,}@*)(*@\HLJLni{1}@*)(*@\HLJLp{)}@*)
+    (*@\HLJLn{state}@*) (*@\HLJLoB{=}@*) (*@\HLJLnf{similar}@*)(*@\HLJLp{(}@*)(*@\HLJLn{r}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{state}@*)(*@\HLJLp{,}@*)(*@\HLJLn{Ns}@*)(*@\HLJLp{,}@*)(*@\HLJLn{Ne}@*)(*@\HLJLp{,}@*)(*@\HLJLn{B}@*)(*@\HLJLp{)}@*)
+    (*@\HLJLk{for}@*) (*@\HLJLn{ib}@*) (*@\HLJLkp{in}@*) (*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLn{B}@*)
+        (*@\HLJLn{R}@*)(*@\HLJLp{,}@*) (*@\HLJLn{U}@*) (*@\HLJLoB{=}@*) (*@\HLJLnf{eigen!}@*)(*@\HLJLp{(}@*)(*@\HLJLn{r}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{state}@*)(*@\HLJLp{[}@*)(*@\HLJLoB{:}@*)(*@\HLJLp{,}@*)(*@\HLJLoB{:}@*)(*@\HLJLp{,}@*)(*@\HLJLn{ib}@*)(*@\HLJLp{])}@*)
+        (*@\HLJLn{state}@*)(*@\HLJLp{[}@*)(*@\HLJLoB{:}@*)(*@\HLJLp{,}@*)(*@\HLJLoB{:}@*)(*@\HLJLp{,}@*)(*@\HLJLn{ib}@*)(*@\HLJLp{]}@*) (*@\HLJLoB{.=}@*) (*@\HLJLnf{view}@*)(*@\HLJLp{(}@*)(*@\HLJLn{U}@*)(*@\HLJLp{,}@*)(*@\HLJLoB{:}@*)(*@\HLJLp{,}@*)(*@\HLJLn{Ns}@*)(*@\HLJLoB{-}@*)(*@\HLJLn{Ne}@*)(*@\HLJLoB{+}@*)(*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLn{Ns}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{.*}@*) (*@\HLJLn{sqrt}@*)(*@\HLJLoB{.}@*)(*@\HLJLp{(}@*)(*@\HLJLn{abs}@*)(*@\HLJLoB{.}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{view}@*)(*@\HLJLp{(}@*)(*@\HLJLn{R}@*)(*@\HLJLp{,}@*)(*@\HLJLn{Ns}@*)(*@\HLJLoB{-}@*)(*@\HLJLn{Ne}@*)(*@\HLJLoB{+}@*)(*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLn{Ns}@*)(*@\HLJLp{)}@*)(*@\HLJLoB{{\textquotesingle}}@*)(*@\HLJLp{))}@*)
+    (*@\HLJLk{end}@*)
+    (*@\HLJLk{return}@*) (*@\HLJLnf{ArrayReg}@*)(*@\HLJLp{(}@*)(*@\HLJLn{state}@*)(*@\HLJLp{)}@*)
+(*@\HLJLk{end}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+Main.WeaveSandBox0.purify
+\end{lstlisting}
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} e.g. purify a state and recover it}@*)
+(*@\HLJLn{reg}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{rand{\_}state}@*)(*@\HLJLp{(}@*)(*@\HLJLni{6}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{focus!}@*)(*@\HLJLp{(}@*)(*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLni{4}@*)(*@\HLJLp{)}@*)
+(*@\HLJLn{reg{\_}p}@*) (*@\HLJLoB{=}@*) (*@\HLJLnf{purify}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{\ensuremath{\rho}}@*)(*@\HLJLp{;}@*) (*@\HLJLn{nbit{\_}env}@*)(*@\HLJLoB{=}@*)(*@\HLJLni{2}@*)(*@\HLJLp{)}@*)
+(*@\HLJLnd{@test}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{fidelity}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLp{,}@*) (*@\HLJLn{reg{\_}p}@*)(*@\HLJLp{)[]}@*) (*@\HLJLoB{\ensuremath{\approx}}@*) (*@\HLJLni{1}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+Test Passed
+\end{lstlisting}
+
+
+\subsection{entanglement \& state distance}
+
+\begin{lstlisting}
+(*@\HLJLn{reg1}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{rand{\_}state}@*)(*@\HLJLp{(}@*)(*@\HLJLni{10}@*)(*@\HLJLp{)}@*)
+(*@\HLJLn{freg1}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{focus!}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg1}@*)(*@\HLJLp{,}@*) (*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLni{4}@*)(*@\HLJLp{)}@*)
+(*@\HLJLn{reg2}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{rand{\_}state}@*)(*@\HLJLp{(}@*)(*@\HLJLni{6}@*)(*@\HLJLp{)}@*)
+(*@\HLJLn{freg2}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{focus!}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg2}@*)(*@\HLJLp{,}@*) (*@\HLJLni{1}@*)(*@\HLJLoB{:}@*)(*@\HLJLni{4}@*)(*@\HLJLp{)}@*)
+(*@\HLJLn{dm1}@*)(*@\HLJLp{,}@*) (*@\HLJLn{dm2}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{freg1}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{reg2dm}@*)(*@\HLJLp{,}@*) (*@\HLJLn{freg2}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{reg2dm}@*)
+
+(*@\HLJLcs{{\#} trace distance between two registers (different by a factor 2)}@*)
+(*@\HLJLnd{@test}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{tracedist}@*)(*@\HLJLp{(}@*)(*@\HLJLn{freg1}@*)(*@\HLJLp{,}@*) (*@\HLJLn{freg2}@*)(*@\HLJLp{)[]}@*)(*@\HLJLoB{/}@*)(*@\HLJLni{2}@*) (*@\HLJLoB{\ensuremath{\approx}}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{trace{\_}distance}@*)(*@\HLJLp{(}@*)(*@\HLJLn{dm1}@*)(*@\HLJLp{,}@*) (*@\HLJLn{dm2}@*)(*@\HLJLp{)}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+Test Passed
+\end{lstlisting}
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} get the entanglement entropy between system and env}@*)
+(*@\HLJLnd{@show}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{vonneumann{\_}entropy}@*)(*@\HLJLp{(}@*)(*@\HLJLn{dm1}@*)(*@\HLJLp{)}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+QI.vonneumann_entropy(dm1) = 2.654100782160223
+\end{lstlisting}
+
+
+\begin{lstlisting}
+(*@\HLJLnd{@show}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{vonneumann{\_}entropy}@*)(*@\HLJLp{(}@*)(*@\HLJLn{dm2}@*)(*@\HLJLp{)}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+QI.vonneumann_entropy(dm2) = 1.2892954397099767
+1.2892954397099767
+\end{lstlisting}
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} KL-divergence (or relative entropy)}@*)
+(*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{kl{\_}divergence}@*)(*@\HLJLp{(}@*)(*@\HLJLn{dm2}@*)(*@\HLJLp{,}@*) (*@\HLJLn{dm1}@*)(*@\HLJLp{)}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+1.5939923451537548
+\end{lstlisting}
+
+
+Note: you can defined many distances and entropies in a similar way, we don't enumerate it.
+
+\subsection{Quantum Operations/Quantum Gates}
+A quantum gate in \texttt{Yao} is equivalent to a unitary channel in \texttt{QI}, matrix representations of blocks in \texttt{Yao} can be used to construct channels.
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} construct a Kraus Operator}@*)
+(*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{KrausOperators}@*)(*@\HLJLp{([}@*)(*@\HLJLnf{Matrix}@*)(*@\HLJLp{(}@*)(*@\HLJLn{ConstGate}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{P0}@*)(*@\HLJLp{),}@*) (*@\HLJLnf{Matrix}@*)(*@\HLJLp{(}@*)(*@\HLJLn{ConstGate}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{P1}@*)(*@\HLJLp{),}@*) (*@\HLJLnf{Matrix}@*)(*@\HLJLp{(}@*)(*@\HLJLn{ConstGate}@*)(*@\HLJLoB{.}@*)(*@\HLJLn{Pu}@*)(*@\HLJLp{)])}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+QuantumInformation.KrausOperators{Array{Complex{Float64},2}}
+    dimensions: (2, 2)
+    Complex{Float64}[1.0+0.0im 0.0+0.0im; 0.0+0.0im 0.0+0.0im]
+    Complex{Float64}[0.0+0.0im 0.0+0.0im; 0.0+0.0im 1.0+0.0im]
+    Complex{Float64}[0.0+0.0im 1.0+0.0im; 0.0+0.0im 0.0+0.0im]
+\end{lstlisting}
+
+
+\begin{lstlisting}
+(*@\HLJLcs{{\#} applying a rotation gate}@*)
+(*@\HLJLn{b1}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{put}@*)(*@\HLJLp{(}@*)(*@\HLJLni{2}@*)(*@\HLJLp{,}@*)(*@\HLJLni{2}@*)(*@\HLJLoB{=>}@*)(*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{Rx}@*)(*@\HLJLp{(}@*)(*@\HLJLnfB{0.3}@*)(*@\HLJLn{\ensuremath{\pi}}@*)(*@\HLJLp{))}@*)
+(*@\HLJLn{c1}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{UnitaryChannel}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{mat}@*)(*@\HLJLp{(}@*)(*@\HLJLn{b1}@*)(*@\HLJLp{))}@*)
+(*@\HLJLn{b2}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{put}@*)(*@\HLJLp{(}@*)(*@\HLJLni{2}@*)(*@\HLJLp{,}@*)(*@\HLJLni{2}@*)(*@\HLJLoB{=>}@*)(*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{Ry}@*)(*@\HLJLp{(}@*)(*@\HLJLnfB{0.3}@*)(*@\HLJLn{\ensuremath{\pi}}@*)(*@\HLJLp{))}@*)
+(*@\HLJLn{c2}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{QI}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{UnitaryChannel}@*)(*@\HLJLp{(}@*)(*@\HLJLnf{mat}@*)(*@\HLJLp{(}@*)(*@\HLJLn{b2}@*)(*@\HLJLp{))}@*)
+
+(*@\HLJLn{reg}@*) (*@\HLJLoB{=}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{rand{\_}state}@*)(*@\HLJLp{(}@*)(*@\HLJLni{2}@*)(*@\HLJLp{)}@*)
+(*@\HLJLnd{@test}@*) (*@\HLJLnf{copy}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{b1}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{reg2dm}@*) (*@\HLJLoB{\ensuremath{\approx}}@*) (*@\HLJLnf{c1}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{reg2dm}@*)(*@\HLJLp{)}@*)
+(*@\HLJLnd{@test}@*) (*@\HLJLnf{copy}@*)(*@\HLJLp{(}@*)(*@\HLJLn{reg}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{Yao}@*)(*@\HLJLoB{.}@*)(*@\HLJLnf{chain}@*)(*@\HLJLp{(}@*)(*@\HLJLn{b1}@*)(*@\HLJLp{,}@*)(*@\HLJLn{b2}@*)(*@\HLJLp{)}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{reg2dm}@*) (*@\HLJLoB{\ensuremath{\approx}}@*) (*@\HLJLp{(}@*)(*@\HLJLn{c2}@*)(*@\HLJLoB{\ensuremath{\circ}}@*)(*@\HLJLn{c1}@*)(*@\HLJLp{)(}@*)(*@\HLJLn{reg}@*) (*@\HLJLoB{|>}@*) (*@\HLJLn{reg2dm}@*)(*@\HLJLp{)}@*)
+\end{lstlisting}
+
+\begin{lstlisting}
+Test Passed
+\end{lstlisting}
+
+
+
+\end{document}

@@ -1,0 +1,175 @@
+
+---
+title: How to port Yao.jl to QuantumInformation.jl
+author: GiggleLiu
+---
+
+# overview
+
+ [`Yao`](https://github.com/QuantumBFS/Yao.jl) is a powerful tool for quantum circuit based simulation, but it does not support many density matrix related operations. This is why we need to port `Yao.jl` with [`QuantumInformation (QI)`](https://github.com/QuantumBFS/QuantumInformation.jl) sometimes (e.g. for computing entanglement entropy).
+ 
+* `Yao.jl` Documentation: https://quantumbfs.github.io/Yao.jl/latest/ (paper is comming out)
+* `QuantumInformation.jl` paper: https://arxiv.org/abs/1806.11464
+     
+### `Yao` provides
+* high performance quantum circuit based simulation
+    * parameter management
+    * gradients
+    * batched regiser
+* operator matrix representation and arithmatics
+* [quantum algorithms](https://github.com/QuantumBFS/QuAlgorithmZoo.jl)
+* [GPU support](https://github.com/QuantumBFS/CuYao.jl)
+
+### `QI` provides
+
+* Compute entropy from density matrices
+* Quantum channels, four types of channel representations
+    * Kraus Operator
+    * Super operator
+    * Dynamic matrices
+    * Stinespring representation
+* Compute norm, distance and distingushability between "states" (density matrices)
+    * Hilbert–Schmidt norm and distance
+    * trace norm and *distance*
+    * diamond norm
+    * Bures distane and Bures angles
+    * *fidelity* and superfidelity
+    * KL-divergence
+    * JS-distance
+* Compute the amount of entanglement
+     * negativity
+     * positive partial trace
+     * concurrence
+* POVM measurements
+
+```julia
+import Yao
+using Yao: ArrayReg, ρ, mat, @bit_str, statevec, ConstGate
+import QuantumInformation; const QI = QuantumInformation
+using QuantumInformation: ket
+using LinearAlgebra
+using Test
+
+# patches to make life easier
+
+# obtaining matrix from Yao.DensityMatrix{1}, `1` is the batch size.
+LinearAlgebra.Matrix(d::Yao.DensityMatrix{1}) = dropdims(d.state, dims=3)
+# obtaining Dense Matrix of a block
+LinearAlgebra.Matrix(blk::Yao.AbstractBlock) = Matrix(mat(blk))
+
+# exchange system and environment qubits
+function exchange_sysenv(reg::ArrayReg{B}) where B
+    ArrayReg{B}(reshape(permutedims(rank3(reg), (2,1,3)), :,size(reg.state, 1)*B))
+end
+```
+
+Obtain reduced density matrices in Yao
+-------------------------
+The memory layout of `Yao` register and `QI` ket are similar, their basis are both [little endian](https://en.wikipedia.org/wiki/Endianness), despite they have different representation powers
+
+* `Yao` support batch,
+* `QI` is not limited to qubits.
+
+
+`Yao` does not have much operations defined on density matrices, but purified states with environment,
+On the other side, most operations in `QI` are defined on **(density) matrices**, they can be easily obtained in `Yao`.
+
+```julia
+# construct a product state, notice the indexing in `QI` starts from `1`
+@test QI.ket(3, 1<<4) ≈ statevec(ArrayReg(bit"0010"))
+
+# join two registers, notice little endian convension is used here.
+reg = Yao.:⊗(ArrayReg(bit"10"), ArrayReg(bit"11"))
+v = QI.:⊗(QI.ket(0b10+1,1<<2), QI.ket(0b11+1,1<<2))
+@test statevec(reg) ≈ v
+```
+
+```julia
+# convert a Yao register to density matrix in QI
+reg2dm(reg::ArrayReg{1}) = reg |> ρ |> Matrix
+
+# e.g. obtain a reduced denstiy matrix for subsystem 1,2,3,4
+reg = Yao.rand_state(10)
+freg = Yao.focus!(reg, 1:4) # make qubits 1-4 active
+reg2dm(freg)
+```
+
+One can also convert a density matrix to a a quantum state through **purification**
+
+```julia
+"""
+get a purification of target density matrix,
+`nbit_env` decides how many qubits in environment,
+which is related to the entropy.
+"""
+function purify(r::Yao.DensityMatrix{B}; nbit_env::Int=nactive(r)) where B
+    Ne = 1<<nbit_env
+    Ns = size(r.state,1)
+    state = similar(r.state,Ns,Ne,B)
+    for ib in 1:B
+        R, U = eigen!(r.state[:,:,ib])
+        state[:,:,ib] .= view(U,:,Ns-Ne+1:Ns) .* sqrt.(abs.(view(R,Ns-Ne+1:Ns)'))
+    end
+    return ArrayReg(state)
+end
+```
+
+```julia
+# e.g. purify a state and recover it
+reg = Yao.rand_state(6) |> Yao.focus!(1:4)
+reg_p = purify(reg |> ρ; nbit_env=2)
+@test Yao.fidelity(reg, reg_p)[] ≈ 1
+```
+
+entanglement & state distance
+----------------
+
+
+```julia
+reg1 = Yao.rand_state(10)
+freg1 = Yao.focus!(reg1, 1:4)
+reg2 = Yao.rand_state(6)
+freg2 = Yao.focus!(reg2, 1:4)
+dm1, dm2 = freg1 |> reg2dm, freg2 |> reg2dm
+
+# trace distance between two registers (different by a factor 2)
+@test Yao.tracedist(freg1, freg2)[]/2 ≈ QI.trace_distance(dm1, dm2)
+```
+
+```julia
+# get the entanglement entropy between system and env
+@show QI.vonneumann_entropy(dm1)
+@show QI.vonneumann_entropy(dm2)
+```
+
+```julia
+# KL-divergence (or relative entropy)
+QI.kl_divergence(dm2, dm1)
+```
+
+Note: you can defined many distances and entropies in a similar way, we don't enumerate it.
+
+Quantum Operations/Quantum Gates
+------------------------
+
+A quantum gate in `Yao` is equivalent to a unitary channel in `QI`, matrix representations of blocks in `Yao` can be used to construct channels.
+
+```julia
+# construct a Kraus Operator
+QI.KrausOperators([Matrix(ConstGate.P0), Matrix(ConstGate.P1), Matrix(ConstGate.Pu)])
+```
+
+```julia
+# applying a rotation gate
+b1 = Yao.put(2,2=>Yao.Rx(0.3π))
+c1 = QI.UnitaryChannel(mat(b1))
+b2 = Yao.put(2,2=>Yao.Ry(0.3π))
+c2 = QI.UnitaryChannel(mat(b2))
+
+reg = Yao.rand_state(2)
+@test copy(reg) |> b1 |> reg2dm ≈ c1(reg |> reg2dm)
+@test copy(reg) |> Yao.chain(b1,b2) |> reg2dm ≈ (c2∘c1)(reg |> reg2dm)
+```
+
+```julia
+```
