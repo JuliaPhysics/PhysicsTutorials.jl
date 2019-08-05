@@ -4,7 +4,7 @@ This package holds tutorials showing how to utilize Julia and its ecosystem for 
 ## Table of Contents
 
 * General
-  * [Speeding up Quantum Mechanics - Matrix Types](tutorials/general/matrix_types.ipynb)
+  * [Speeding up Quantum Mechanics - Matrix Types](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/general/matrix_types.html)
 
 ## Interactive Jupyter Notebooks
 
