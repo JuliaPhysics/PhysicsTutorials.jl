@@ -43,7 +43,7 @@ To have the title and author information of a tutorial formatted nicely, we spec
 * The first line should indicate the title information as a level 1 header, indicated by `#`.
 * The second line should specify the author information as a level 3 heading, i.e. `###`.
 
-Hence, for notebook and Weave input files ([example](tutorials/machine_learning/ml_ising/ml_ising.jl)) you want the first two lines to be
+Hence, for notebook and Weave input files ([example](tutorials/machine_learning/ml_ising/ml_ising.ipynb)) you want the first two lines to be
 
 ```markdown
 # My Awesome Tutorial
