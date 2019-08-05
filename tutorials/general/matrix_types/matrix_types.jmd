@@ -3,7 +3,6 @@ title: Speeding up Quantum Mechanics - Matrix Types
 author: Carsten Bauer
 ---
 
-
 ## Free Fermions on a Chain
 
 
@@ -49,7 +48,7 @@ A typical thing one does in quantum mechanics is calculate the expectation value
 
 Calculates the quantum mechanical expectation value `<ψ|O|ψ>`, where `O` is an operator and `ψ` is a state.
 """
-ev(O, ψ) = ψ'*O*ψ
+ev(O, ψ) = ψ'*O*ψ;
 ```
 
 
@@ -158,6 +157,5 @@ Note that apart from Julia's built-in matrix types there are also great custom t
 
 
 ```{julia; echo=false; skip="notebook"}
-using PhysicsTutorials
-PhysicsTutorials.tutorial_footer(WEAVE_ARGS[:folder],WEAVE_ARGS[:file])
+display("text/markdown", WEAVE_ARGS[:footer])
 ```
