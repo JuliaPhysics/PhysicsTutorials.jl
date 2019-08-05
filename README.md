@@ -1,10 +1,13 @@
 # PhysicsTutorials.jl
-This package holds tutorials showing how to utilize Julia and its ecosystem for physics applications. Tutorials are available as PDFs, HTML webpages, and interactive Jupyter notebooks. For more details, please consult the [JuliaPhysics webpage](http://juliaphysics.github.io).
+This package holds tutorials showing how to utilize Julia and its ecosystem for physics applications. Tutorials are available as PDFs, HTML webpages, and interactive Jupyter notebooks. The folder structure is `tutorials/<category>/<tutorial name>/`. Each tutorial folder is a Julia project, which can be `] activate`d and `] instantiate`d. For more information, please consult the [JuliaPhysics webpage](http://juliaphysics.github.io).
 
 ## Table of Contents
 
 * General
-  * [Speeding up Quantum Mechanics - Matrix Types](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/general/matrix_types.html)
+  * [Speeding up Quantum Mechanics - Matrix Types](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/general/matrix_types/matrix_types.html)
+  
+* Machine Learning
+  * [Machine Learning the Ising Transition](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/machine_learning/ml_ising/ml_ising.html)
 
 ## Interactive Jupyter Notebooks
 
@@ -27,11 +30,9 @@ All PDFs, webpages, and Jupyter notebooks are generated from the Weave.jl files 
 To trigger the generation process for an individual tutorial, run the following code:
 
 ```julia
-using Pkg, PhysicsTutorials
+using PhysicsTutorials
 cd(joinpath(dirname(pathof(PhysicsTutorials)), ".."))
-pkg"activate ."
-pkg"instantiate"
-PhysicsTutorials.weave_file("general","matrix_types.jmd")
+PhysicsTutorials.weave_tutorial("general","matrix_types")
 ```
 
 To generate all formats for all tutorials, do:
@@ -39,14 +40,3 @@ To generate all formats for all tutorials, do:
 ```julia
 PhysicsTutorials.weave_all()
 ```
-
-If you add new tutorials please put
-
-`````markdown
-```{julia; echo=false; skip="notebook"}
-using PhysicsTutorials
-PhysicsTutorials.tutorial_footer(WEAVE_ARGS[:folder],WEAVE_ARGS[:file])
-```
-`````
-
-at the end of the `*.jmd` file. If your tutorial requires new packages, don't forget to `] add` them to the `Project.toml` file in the root folder of the repository.
