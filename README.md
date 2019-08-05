@@ -32,7 +32,27 @@ To contribute a tutorial, clone the repository and put the source file into `tut
 ```julia
 using Pkg; Pkg.activate(".")
 using PhysicsTutorials
-PhysicsTutorials.convert_tutorial("<category>","<tutorial_name>"; PhysicsTutorials.NotebookSource())
+PhysicsTutorials.convert_tutorial("<category>","<tutorial_name>", PhysicsTutorials.NotebookSource())
 ```
 
 For Weave or Literate sources, replace `PhysicsTutorials.NotebookSource()` by `PhysicsTutorials.WeaveSource()` or `PhysicsTutorials.LiterateSource()`, respectively.
+
+### Title and Author Formatting
+To have the title and author information of a tutorial formatted nicely, we special case the first two (non-empty) lines when parsing source files.
+
+* The first line should indicate the title information as a level 1 header, indicated by `#`.
+* The second line should specify the author information as a level 3 heading, i.e. `###`.
+
+Hence, for notebook and Weave input files ([example](tutorials/machine_learning/ml_ising/ml_ising.jl)) you want the first two lines to be
+
+```markdown
+# My Awesome Tutorial
+### John Doe
+```
+
+and for Literate input (see [this example](tutorials/general/matrix_types/matrix_types.jl))
+
+```markdown
+# # My Awesome Tutorial
+# ### John Doe
+```
