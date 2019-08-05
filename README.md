@@ -26,17 +26,13 @@ PhysicsTutorials.open_notebooks()
 
 ## Contributing
 
-All PDFs, webpages, and Jupyter notebooks are generated from the Weave.jl files in the `tutorials` folder (`.jmd`).
-To trigger the generation process for an individual tutorial, run the following code:
+Supported source files for tutorials are Jupyter notebooks, Weave.jl files, or Literate.jl files.
+To contribute a tutorial, clone the repository and put the source file into `tutorials/<category>/<tutorial_name>/` and name it `<tutorial_name>.ipynb` (extension `.jmd`/`.jl` for Weave/Literate sources). To trigger the generation process of all output formats, run the following code from within the repository root folder:
 
 ```julia
+using Pkg; Pkg.activate(".")
 using PhysicsTutorials
-cd(joinpath(dirname(pathof(PhysicsTutorials)), ".."))
-PhysicsTutorials.weave_tutorial("general","matrix_types")
+PhysicsTutorials.convert_tutorial("<category>","<tutorial_name>"; PhysicsTutorials.NotebookSource())
 ```
 
-To generate all formats for all tutorials, do:
-
-```julia
-PhysicsTutorials.weave_all()
-```
+For Weave or Literate sources, replace `PhysicsTutorials.NotebookSource()` by `PhysicsTutorials.WeaveSource()` or `PhysicsTutorials.LiterateSource()`, respectively.
