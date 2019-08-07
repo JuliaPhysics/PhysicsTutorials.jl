@@ -140,4 +140,68 @@ function convert_tutorial(cat, tut, source::WeaveSource; kwargs...)
     convert_tutorial(cat, tut, NotebookSource(); keep_weave=true, use_weave=true, kwargs...)
 end
 
+function _md2literate(s)
+    # prepocessing
+    s = replace(s, "\$\$ "=>"\$\$")
+    s = replace(s, " \$\$"=>"\$\$")
+    lines = split(s, "\n")
+    # markdown to julia comments and julia blocks to plain julia
+    juliablock = false
+    for i in 1:length(lines)
+        l = strip(lines[i])
+        l == "" && continue
+        if startswith(l, "```julia")
+            juliablock = true
+            lines[i] = ""
+            continue
+        elseif startswith(l, "```")
+            juliablock = false
+            lines[i] = ""
+            continue
+        end
+
+        if !juliablock
+            lines[i] = string("# ", l)
+        else
+            if startswith(l, "#") # julia code comment
+                lines[i] = string("#", l)
+            elseif startswith(l, "?")
+                lines[i] = string("## ", l)
+            end
+        end
+    end
+    # remove subsequent empty lines
+    out = String[]
+    i = 1
+    rmempty = false
+    for i in 1:length(lines)
+        l = lines[i]
+        if l == "" && !rmempty
+            rmempty = true
+        elseif l =="" && rmempty
+            continue # do not push line
+        else
+            rmempty = false
+        end
+        push!(out, l)
+    end
+    return join(out, "\n")
+end
+
+function nb2literate(cat, tut)
+    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+    nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
+    mdfile = joinpath(tut_folder, string(tut, ".md"))
+    jlfile = joinpath(tut_folder, string(tut, ".jl"))
+    @info "Converting to markdown"
+    read(`jupyter nbconvert --to markdown $nbfile`)
+    mv(mdfile, jlfile, force=true)
+    @info "Converting markdown to literate"
+    s = read(jlfile, String)
+    write(jlfile, _md2literate(s))
+    asset_folder = joinpath(tut_folder, string(tut, "_files"))
+    isdir(asset_folder) && rm(asset_folder, recursive=true)
+    nothing
+end
+
 end # module
