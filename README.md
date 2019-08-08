@@ -5,7 +5,7 @@ This package holds tutorials showing how to utilize Julia and its ecosystem for 
 
 * General
   * [Speeding up Quantum Mechanics - Matrix Types](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/general/matrix_types/matrix_types.html)
-  * [Quantum Ising Chain - Exact Diagonalization](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/general/quantum_ising/quantum_ising.html)
+  * [Quantum Ising Phase Transition](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/general/quantum_ising/quantum_ising.html)
   
 * Machine Learning
   * [Machine Learning the Ising Transition](https://juliaphysics.github.io/PhysicsTutorials.jl/tutorials/machine_learning/ml_ising/ml_ising.html)
