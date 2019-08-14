@@ -31,7 +31,7 @@ To contribute a tutorial, clone the repository and put the source file into `tut
 
 0. Make sure you have `Fire` installed, if not, install it with `julia>]add Fire`,
 1. Create source file `tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>`, where the extension should be one of `.ipynb`, `.jl` and `.jmd` .
-2. Type `julia generate.jl tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>` in a terminal.
+2. Type `julia convert.jl tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>` in a terminal.
 
 
 #### Alternative approach: trigger conversion manually
