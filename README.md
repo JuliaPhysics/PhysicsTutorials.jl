@@ -30,6 +30,13 @@ PhysicsTutorials.open_notebooks()
 Supported source files for tutorials are Jupyter notebooks, Weave.jl files, or Literate.jl files.
 To contribute a tutorial, clone the repository and put the source file into `tutorials/<category>/<tutorial_name>/` and name it `<tutorial_name>.ipynb` (extension `.jmd`/`.jl` for Weave/Literate sources). To trigger the generation process of all output formats, run the following code from within the repository root folder:
 
+0. Make sure you have `Fire` installed, if not, install it with `julia> ] add Fire`,
+1. Create source file `tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>`, where the extension should be one of `.ipynb`, `.jl` and `.jmd` .
+2. Type `julia convert.jl tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>` in a terminal.
+
+
+#### Alternative approach: trigger conversion manually
+
 ```julia
 using Pkg; Pkg.activate(".")
 using PhysicsTutorials
