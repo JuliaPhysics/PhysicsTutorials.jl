@@ -34,7 +34,7 @@ To contribute a tutorial, clone the repository and put the source file into `tut
 2. Type `julia generate.jl tutorials/<category>/<tutorial_name>/<tutorial_name>.<extension>` in a terminal.
 
 
-#### An optional approach: generate source manually
+#### Alternative approach: trigger conversion manually
 
 ```julia
 using Pkg; Pkg.activate(".")
