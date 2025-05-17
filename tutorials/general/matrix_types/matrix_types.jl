@@ -17,7 +17,7 @@ using LinearAlgebra # makes Julia speak linear algebra fluently
 
 N = 100 # number of sites
 t = 1
-μ = -0.5
+μ = -0.5 # you can get the greek letter by typing \mu<Tab>
 
 H = diagm(0 => fill(μ, N), 1 => fill(-t, N-1), -1 => fill(-t, N-1))
 
