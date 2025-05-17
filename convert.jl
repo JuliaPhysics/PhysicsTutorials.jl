@@ -11,7 +11,7 @@ using PhysicsTutorials
     category, tutorial_name = pns[end-2:end-1]
     fname, ext = splitext(pns[end])
 
-    fname==tutorial_name || error("tutorial name $tutorial_name is not consistent with filename $fname, expected format: `tutorials/quantum_computing/<name>/<name>.ipynb`")
+    fname==tutorial_name || error("tutorial name $tutorial_name is not consistent with filename $fname, expected format: `tutorials/<name>/<name>.ipynb`")
 
     if ext == ".ipynb"
         source = PhysicsTutorials.NotebookSource()
@@ -54,5 +54,3 @@ function _splitpath(p::String)
     end
     return out
 end
-
-
