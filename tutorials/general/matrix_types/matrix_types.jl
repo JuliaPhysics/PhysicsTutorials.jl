@@ -29,7 +29,7 @@ H = diagm(0 => fill(μ, N), 1 => fill(-t, N-1), -1 => fill(-t, N-1))
 """
     ev(O, ψ)
 
-Calculates the quantum mechanical expectation value `<ψ|O|ψ>`, where `O` is an operator and `ψ` is a state.
+Calculates the quantum mechanical expectation value `⟨ψ|O|ψ⟩`, where `O` is an operator and `ψ` is a state.
 """
 ev(O, ψ) = ψ'*O*ψ;
 #-
