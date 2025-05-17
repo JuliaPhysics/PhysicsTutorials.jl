@@ -326,3 +326,225 @@ p = plot()
     println(M)
 end
 p
+
+# **This looks like a phase transition!**
+#
+# For small $h$, the magnetization is unity, corresponding to a ferromagnetic
+# state. By increasing the magnetic field $h$ we have a competition between the
+# two terms in the Hamiltonian and eventually the system becomes paramagnetic
+# with $M\approx0$. Our plot suggests that this change of state happens around
+# $h\sim1$, which is in good agreement with the exact solution $h=1$.
+#
+# It is crucial to realize, that in our calculation we are inspecting the ground
+# state of the system. Since $T=0$, it is purely quantum fluctuations that drive
+# the transition: a **quantum phase transition**! This is to be compared to
+# increasing temperature in the classical Ising model, where it's thermal
+# fluctuations that cause a classical phase transition from a ferromagnetic to a
+# paramagnetic state. For this reason, the state that we observe at high
+# magnetic field strengths is called a **quantum paramagnet**.
+
+
+# ## Hilbert space is a big space
+
+# So far, we have only inspected chains of length $N\leq10$. As we see in our
+# plot above, there are rather strong finite-size effects on the magnetization.
+# To extract a numerical estimate for the critical magnetic field strength $h_c$
+# of the transition we would have to consider much larger systems until we
+# observe convergence as a function of $N$. Although this is clearly beyond the
+# scope of this tutorial, let us at least pave the way.
+#
+# Our calculation, in its current form, doesn't scale. The reason for this is
+# simple, **Hilbert space is a big place!**
+#
+# The number of basis states, and therefore the number of dimensions, grows
+# **exponentially** with system size.
+
+plot(N -> 2^N, 1, 20, legend=false, color=:black, xlab="N", ylab="# Hilbert space dimensions")
+
+# Our Hamiltonian matrix therefore will become huge(!) and is not going to fit
+# into memory (apart from the fact that diagonalization would take forever).
+
+using Test
+@test_throws OutOfMemoryError TransverseFieldIsing(N=20, h=1)
+
+# So, what can we do about it? The answer is, **sparsity**.
+#
+# Let's inspect the Hamiltonian a bit more closely.
+
+H = TransverseFieldIsing(N=10, h=1)
+
+# Noticably, there are a lot of zeros. How does this depend on $N$?
+
+# Let's plot the sparsity, i.e. ratio of zero entries.
+
+sparsity(x) = count(isequal(0), x)/length(x)
+
+Ns = 2:12
+sparsities = Float64[]
+for N in Ns
+    H = TransverseFieldIsing(N=N, h=1)
+    push!(sparsities, sparsity(H))
+end
+plot(Ns, sparsities, legend=false, xlab="chain length N", ylab="Hamiltonian sparsity", marker=:circle)
+
+# For $N\gtrsim10$ almost all entries are zero! We should get rid of those and store $H$ as a sparse matrix.
+
+
+# ### Building the sparse Hamiltonian
+#
+# Generally, we can bring a dense matrix into a sparse matrix format using the
+# function `sparse`.
+
+using SparseArrays
+H = TransverseFieldIsing(N=4,h=1)
+H |> sparse
+
+# Note that in this format, only the 80 non-zero entries are stored (rather than
+# 256 elements).
+#
+# So, how do we have to modify our function `TransverseFieldIsing` to only keep
+# track of non-zero elements during the Hamiltonian construction?
+#
+# It turns out it is as simple as initializing our Hamiltonian, identity, and
+# Pauli matrices as sparse matrices!
+
+function TransverseFieldIsing_sparse(;N,h)
+    id = [1 0; 0 1] |> sparse
+    σˣ = [0 1; 1 0] |> sparse
+    σᶻ = [1 0; 0 -1] |> sparse
+
+    first_term_ops = fill(id, N)
+    first_term_ops[1] = σᶻ
+    first_term_ops[2] = σᶻ
+
+    second_term_ops = fill(id, N)
+    second_term_ops[1] = σˣ
+
+    H = spzeros(Int, 2^N, 2^N) # note the spzeros instead of zeros here
+    for i in 1:N-1
+        H -= foldl(⊗, first_term_ops)
+        first_term_ops = circshift(first_term_ops,1)
+    end
+
+    for i in 1:N
+        H -= h*foldl(⊗, second_term_ops)
+        second_term_ops = circshift(second_term_ops,1)
+    end
+    H
+end
+
+# We should check that apart from the new type `SparseMatrixCSC` this is still the same Hamiltonian.
+
+H = TransverseFieldIsing_sparse(N=10, h=1);
+#-
+
+H_dense = TransverseFieldIsing(N=10, h=1)
+H ≈ H_dense
+
+# Great. But is it really faster?
+
+@time TransverseFieldIsing(N=10,h=1);
+@time TransverseFieldIsing_sparse(N=10,h=1);
+
+# It is *a lot* faster!
+
+# Alright, let's try to go to larger $N$. While `TransverseFieldIsing` threw an
+# `OutOfMemoryError` for `N=20`, our new function is more efficient:
+
+@time H = TransverseFieldIsing_sparse(N=20,h=1)
+
+# Note that this is matrix, formally, has **1,099,511,627,776** entries!
+
+
+# ### Diagonalizing sparse matrices
+
+
+# We have taken the first hurdle of constructing our large-system Hamiltonian as
+# a sparse matrix. Unfortunately, if we try to diagonalize $H$, we realize that
+# Julia's built-in eigensolver `eigen` doesn't support matrices.
+#
+# ```
+# eigen(A) not supported for sparse matrices. Use for example eigs(A) from the
+# Arpack package instead.
+# ```
+
+
+# Gladly it suggests a solution:
+# [ARPACK.jl](https://github.com/JuliaLinearAlgebra/Arpack.jl). It provides a
+# wrapper to the Fortran library
+# [ARPACK](https://www.caam.rice.edu/software/ARPACK/) which implements
+# iterative eigenvalue and singular value solvers for sparse matrices.
+#
+# There are also a bunch of pure Julia implementations available in
+#
+# * [ArnoldiMethod.jl](https://github.com/haampie/ArnoldiMethod.jl)
+# * [KrylovKit.jl](https://github.com/Jutho/KrylovKit.jl)
+# * [IterativeSolvers.jl](https://github.com/JuliaMath/IterativeSolvers.jl)
+#
+# Let us use the ArnoldiMethod.jl package.
+
+using ArnoldiMethod
+
+function eigen_sparse(x)
+    decomp, history = partialschur(x, nev=1, which=SR()); # only solve for the ground state
+    vals, vecs = partialeigen(decomp);
+    return vals, vecs
+end
+
+# Solving for the ground state takes less than a minute on an i5 desktop machine.
+
+@time vals, vecs = eigen_sparse(H)
+
+# Voila. There we have the ground state energy and the ground state wave function for a $N=20$ chain of quantum spins!
+
+groundstate = vecs[:,1]
+
+# ### Magnetization once again
+
+# To measure the magnetization, we could use our function `magnetization(state,
+# basis)` from above. However, the way we wrote it above, it depends on an
+# explicit list of basis states which we do not want to construct for a large
+# system explicitly.
+#
+# Let's rewrite the function slightly such that bit representations of our basis
+# states are calculated on the fly.
+
+function magnetization(state)
+    N = Int(log2(length(state)))
+    M = 0.
+    for i in 1:length(state)
+        bstate = bit_rep(i-1,N)
+        bstate_M = 0.
+        for spin in bstate
+            bstate_M += (state[i]^2 * (spin ? 1 : -1))/N
+        end
+        @assert abs(bstate_M) <= 1
+        M += abs(bstate_M)
+    end
+    return M
+end
+
+#-
+
+magnetization(groundstate, basis)
+
+# We are now able to recreate our magnetization vs magnetic field strength plot
+# including larger systems (takes about 3 minutes on this i5 Desktop machine).
+
+using Plots
+hs = 10 .^ range(-2., stop=2., length=10)
+Ns = 2:2:20
+p = plot()
+@time for N in Ns
+    M = zeros(length(hs))
+    for (i,h) in enumerate(hs)
+        H = TransverseFieldIsing_sparse(N=N, h=h)
+        vals, vecs = eigen_sparse(H)
+        groundstate = @view vecs[:,1]
+        M[i] = magnetization(groundstate)
+    end
+    plot!(p, hs, M, xscale=:log10, marker=:circle, label="N = $N",
+        xlab="h", ylab="M(h)")
+    println(M)
+end
+p
