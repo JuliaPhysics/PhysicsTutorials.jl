@@ -3,10 +3,11 @@ module PhysicsTutorials
 
 using Weave, Literate, Pkg
 
-repo_directory = joinpath(@__DIR__,"..")
-cssfile = joinpath(@__DIR__, "..", "templates", "skeleton_css.css")
-latexfile = joinpath(@__DIR__, "..", "templates", "julia_tex.tpl")
-htmlfile = joinpath(@__DIR__, "..", "templates", "julia_html.tpl")
+const repo_directory = joinpath(@__DIR__, "..") |> normpath
+const tutorials_directory = joinpath(repo_directory, "tutorials")
+const cssfile = joinpath(repo_directory, "templates", "skeleton_css.css")
+const latexfile = joinpath(repo_directory, "templates", "julia_tex.tpl")
+const htmlfile = joinpath(repo_directory, "templates", "julia_html.tpl")
 
 
 function open_notebooks()
@@ -27,6 +28,7 @@ function activate_env(folder)
     else
         Pkg.activate(joinpath(repo_directory, folder))
     end
+    Pkg.instantiate()
     nothing
 end
 
@@ -60,9 +62,10 @@ function convert_tutorial(cat, tut, source::NotebookSource;
                             overwrite=false,
                             quick=false,
                             markdown=false,
+                            html=false,
                             keep_weave=false,
                             use_weave=false)
-    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+    tut_folder = joinpath(tutorials_directory, cat, tut)
     nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
     weavefile = joinpath(tut_folder, string(tut, ".jmd"))
 
@@ -88,7 +91,7 @@ function convert_tutorial(cat, tut, source::NotebookSource;
 
     format_header!(weavefile)
     # html
-    if !isfile(joinpath(tut_folder, string(tut, ".html"))) || overwrite
+    if html && (!isfile(joinpath(tut_folder, string(tut, ".html"))) || overwrite)
         @info "Converting to html"
         if quick
             read(`jupyter nbconvert --to HTML $nbfile`)
@@ -114,21 +117,21 @@ function convert_tutorial(cat, tut, source::NotebookSource;
     nothing
 end
 
-function convert_tutorial(cat, tut, source::LiterateSource; kwargs...)
-    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+function convert_tutorial(cat, tut, source::LiterateSource; documenter=false, kwargs...)
+    tut_folder = joinpath(tutorials_directory, cat, tut)
     literatefile = joinpath(tut_folder, string(tut, ".jl"))
     nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
 
     # notebook
     @info "Converting to notebook"
     with_localenv(tut_folder) do
-        Literate.notebook(literatefile, tut_folder; documenter=false)
+        Literate.notebook(literatefile, tut_folder; documenter)
     end
     convert_tutorial(cat, tut, NotebookSource(); kwargs...)
 end
 
 function convert_tutorial(cat, tut, source::WeaveSource; kwargs...)
-    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+    tut_folder = joinpath(tutorials_directory, cat, tut)
     weavefile = joinpath(tut_folder, string(tut, ".jmd"))
     nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
 
@@ -189,7 +192,7 @@ function _md2literate(s)
 end
 
 function nb2literate(cat, tut)
-    tut_folder = joinpath(repo_directory, "tutorials", cat, tut)
+    tut_folder = joinpath(tutorials_directory, cat, tut)
     nbfile = joinpath(tut_folder, string(tut, ".ipynb"))
     mdfile = joinpath(tut_folder, string(tut, ".md"))
     jlfile = joinpath(tut_folder, string(tut, ".jl"))
